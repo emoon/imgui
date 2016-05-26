@@ -30,7 +30,7 @@
 #pragma clang diagnostic ignored "-Wint-to-void-pointer-cast"   // warning : cast to 'void *' from smaller integer type 'int'
 #pragma clang diagnostic ignored "-Wformat-security"            // warning : warning: format string is not a string literal
 #pragma clang diagnostic ignored "-Wexit-time-destructors"      // warning : declaration requires an exit-time destructor       // exit-time destruction order is undefined. if MemFree() leads to users code that has been disabled before exit it might cause problems. ImGui coding style welcomes static/globals.
-#pragma clang diagnostic ignored "-Wreserved-id-macro"          // warning : macro name is a reserved identifier                // 
+#pragma clang diagnostic ignored "-Wreserved-id-macro"          // warning : macro name is a reserved identifier                //
 #elif defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"          // warning: cast to pointer from integer of different size
 #pragma GCC diagnostic ignored "-Wformat-security"              // warning : format string is not a string literal (potentially insecure)
@@ -113,7 +113,7 @@ void ImGui::ShowTestWindow(bool* p_open)
     static bool show_app_manipulating_window_title = false;
     static bool show_app_custom_rendering = false;
     static bool show_app_style_editor = false;
-    static bool show_app_dynamic_memory_view = false;
+    static bool show_app_dynamic_memory_view = true;
 
     static bool show_app_metrics = false;
     static bool show_app_about = false;
@@ -248,7 +248,7 @@ void ImGui::ShowTestWindow(bool* p_open)
                     if (ImGui::TreeNode((void*)(intptr_t)i, "Child %d", i))
                     {
                         ImGui::Text("blah blah");
-                        ImGui::SameLine(); 
+                        ImGui::SameLine();
                         if (ImGui::SmallButton("print")) printf("Child %d pressed", i);
                         ImGui::TreePop();
                     }
@@ -266,7 +266,7 @@ void ImGui::ShowTestWindow(bool* p_open)
                     if (i >= 3)
                         node_flags |= ImGuiTreeNodeFlags_AlwaysOpen;
                     bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, "Selectable %s %d", (i >= 3) ? "Leaf" : "Node", i);
-                    if (ImGui::IsItemClicked()) 
+                    if (ImGui::IsItemClicked())
                         node_clicked = i;
                     if (node_open)
                     {
@@ -1820,7 +1820,7 @@ static void ShowExampleAppConstrainedResize(bool* p_open)
 
     if (ImGui::Begin("Example: Constrained Resize", p_open))
     {
-        const char* desc[] = 
+        const char* desc[] =
         {
             "Resize vertical only",
             "Resize horizontal only",
@@ -1829,11 +1829,11 @@ static void ShowExampleAppConstrainedResize(bool* p_open)
             "Custom: Always Square",
             "Custom: Fixed Steps (100)",
         };
-        ImGui::Combo("Constraint", &type, desc, IM_ARRAYSIZE(desc)); 
+        ImGui::Combo("Constraint", &type, desc, IM_ARRAYSIZE(desc));
         if (ImGui::Button("200x200")) ImGui::SetWindowSize(ImVec2(200,200)); ImGui::SameLine();
         if (ImGui::Button("500x500")) ImGui::SetWindowSize(ImVec2(500,500)); ImGui::SameLine();
         if (ImGui::Button("800x200")) ImGui::SetWindowSize(ImVec2(800,200));
-        for (int i = 0; i < 10; i++) 
+        for (int i = 0; i < 10; i++)
             ImGui::Text("Hello, sailor! Making this line long enough for the example.");
     }
     ImGui::End();
@@ -1978,45 +1978,74 @@ static void ShowExampleAppCustomRendering(bool* p_open)
 }
 
 const size_t dynamic_mem_size = 1 * 1024 * 1024;
-static unsigned char s_dynamic_mem_data[dynamic_mem_size];
+static uint8_t s_dynamic_mem_data[dynamic_mem_size];
 static bool has_init_data = false;
 
 static void ShowDynamicMemoryView(bool* p_open)
 {
-    ImGui::SetNextWindowSize(ImVec2(500,500));
-    if (!ImGui::Begin("Example: Dynamic Memory", p_open))
+    if (!ImGui::Begin("Example: Dynamic Memory", p_open, ImVec2(500, 500)))
     {
         ImGui::End();
         return;
     }
 
-	if (!has_init_data) 
+	if (!has_init_data)
 	{
 		for (size_t i = 0; i < dynamic_mem_size; ++i)
-		{
 			s_dynamic_mem_data[i] = rand() & 0xff;
-		}
 
 		has_init_data = true;
 	}
 
+	// Set up some constants for the drawing
 
-	ImVec2 size = ImGui::GetWindowSize();
+	uint64_t start_address = (uint64_t)(uintptr_t)s_dynamic_mem_data;
+	uint64_t end_address = start_address + 64 * 1024;
 
-	ImGui::BeginChild("child", size, false, 0);
+    const float font_size = ImGui::GetFontSize();
+    const ImVec2 window_size = ImGui::GetWindowSize();
+    const int drawable_chars = (int)(window_size.x / (font_size * 2.3f));
+    const int drawable_line_count = (int)((end_address - start_address) / drawable_chars);
 
-	/*
-	// TODO: Fix me
-	const float fontWidth = 13.0f; // uiFuncs->getFontWidth();
+    uint8_t* data = s_dynamic_mem_data;
 
-	float drawableChars = (float)(int)(windowSize.x / (fontWidth + 23));
+	ImGui::BeginChild("child", window_size, false, 0);
 
-	int drawableLineCount = (int)((endAddress - startAddress) / (int)drawableChars);
+    for (int i = 0; i < drawable_line_count; ++i)
+	{
+        // Get Hex and chars
 
-	//printf("%d %d %d %d\n", drawableLineCount, (int)endAddress, (int)startAddress, (int)drawableChars);
+		ImGui::Text("%p: ", data);
+		ImGui::SameLine(0, -1);
 
-	drawData(data, uiFuncs, drawableLineCount, (int)drawableChars);
-*/
+        // Print hex values
+
+        for (int p = 0; p < drawable_chars; ++p)
+        {
+			ImGui::Text("%02x", data[p]);
+			ImGui::SameLine(0, -1);
+        }
+
+        // print characters
+
+        for (int p = 0; p < drawable_chars; ++p)
+        {
+            uint8_t c = data[p];
+            uint8_t wc = 0;
+
+            if (c >= 32 && c < 128)
+                wc = (char)c;
+            else
+                wc = '.';
+
+			ImGui::Text("%c", wc);
+			ImGui::SameLine(0, 0);
+        }
+
+		ImGui::Text("\n");
+
+        data += drawable_chars;
+    }
 
 	ImGui::EndChild();
 

@@ -64,6 +64,7 @@ static void ShowExampleAppConstrainedResize(bool* p_open);
 static void ShowExampleAppFixedOverlay(bool* p_open);
 static void ShowExampleAppManipulatingWindowTitle(bool* p_open);
 static void ShowExampleAppCustomRendering(bool* p_open);
+static void ShowDynamicMemoryView(bool* p_open);
 static void ShowExampleAppMainMenuBar();
 static void ShowExampleMenuFile();
 
@@ -112,6 +113,7 @@ void ImGui::ShowTestWindow(bool* p_open)
     static bool show_app_manipulating_window_title = false;
     static bool show_app_custom_rendering = false;
     static bool show_app_style_editor = false;
+    static bool show_app_dynamic_memory_view = false;
 
     static bool show_app_metrics = false;
     static bool show_app_about = false;
@@ -127,6 +129,7 @@ void ImGui::ShowTestWindow(bool* p_open)
     if (show_app_fixed_overlay) ShowExampleAppFixedOverlay(&show_app_fixed_overlay);
     if (show_app_manipulating_window_title) ShowExampleAppManipulatingWindowTitle(&show_app_manipulating_window_title);
     if (show_app_custom_rendering) ShowExampleAppCustomRendering(&show_app_custom_rendering);
+    if (show_app_dynamic_memory_view) ShowDynamicMemoryView(&show_app_dynamic_memory_view);
 
     if (show_app_metrics) ImGui::ShowMetricsWindow(&show_app_metrics);
     if (show_app_style_editor) { ImGui::Begin("Style Editor", &show_app_style_editor); ImGui::ShowStyleEditor(); ImGui::End(); }
@@ -191,6 +194,7 @@ void ImGui::ShowTestWindow(bool* p_open)
             ImGui::MenuItem("Simple overlay", NULL, &show_app_fixed_overlay);
             ImGui::MenuItem("Manipulating window title", NULL, &show_app_manipulating_window_title);
             ImGui::MenuItem("Custom rendering", NULL, &show_app_custom_rendering);
+            ImGui::MenuItem("Dynamic Memory View", NULL, &show_app_dynamic_memory_view);
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help"))
@@ -1971,6 +1975,18 @@ static void ShowExampleAppCustomRendering(bool* p_open)
             points.pop_back();
     }
     ImGui::End();
+}
+
+static void ShowDynamicMemoryView(bool* p_open)
+{
+    ImGui::SetNextWindowSize(ImVec2(500,500));
+    if (!ImGui::Begin("Example: Dynamic Memory", p_open))
+    {
+        ImGui::End();
+        return;
+    }
+
+	ImGui::End();
 }
 
 // For the console example, here we are using a more C++ like approach of declaring a class to hold the data and the functions.

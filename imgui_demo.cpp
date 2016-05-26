@@ -1977,6 +1977,10 @@ static void ShowExampleAppCustomRendering(bool* p_open)
     ImGui::End();
 }
 
+const size_t dynamic_mem_size = 1 * 1024 * 1024;
+static unsigned char s_dynamic_mem_data[dynamic_mem_size];
+static bool has_init_data = false;
+
 static void ShowDynamicMemoryView(bool* p_open)
 {
     ImGui::SetNextWindowSize(ImVec2(500,500));
@@ -1985,6 +1989,36 @@ static void ShowDynamicMemoryView(bool* p_open)
         ImGui::End();
         return;
     }
+
+	if (!has_init_data) 
+	{
+		for (size_t i = 0; i < dynamic_mem_size; ++i)
+		{
+			s_dynamic_mem_data[i] = rand() & 0xff;
+		}
+
+		has_init_data = true;
+	}
+
+
+	ImVec2 size = ImGui::GetWindowSize();
+
+	ImGui::BeginChild("child", size, false, 0);
+
+	/*
+	// TODO: Fix me
+	const float fontWidth = 13.0f; // uiFuncs->getFontWidth();
+
+	float drawableChars = (float)(int)(windowSize.x / (fontWidth + 23));
+
+	int drawableLineCount = (int)((endAddress - startAddress) / (int)drawableChars);
+
+	//printf("%d %d %d %d\n", drawableLineCount, (int)endAddress, (int)startAddress, (int)drawableChars);
+
+	drawData(data, uiFuncs, drawableLineCount, (int)drawableChars);
+*/
+
+	ImGui::EndChild();
 
 	ImGui::End();
 }

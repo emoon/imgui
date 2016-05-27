@@ -1977,10 +1977,6 @@ static void ShowExampleAppCustomRendering(bool* p_open)
     ImGui::End();
 }
 
-const size_t dynamic_mem_size = 1 * 1024 * 1024;
-static uint8_t s_dynamic_mem_data[dynamic_mem_size];
-static bool has_init_data = false;
-
 static void ShowVirtualScrollingView(bool* p_open)
 {
     if (!ImGui::Begin("Example: Virtual Scrolling", p_open, ImVec2(500, 500)))
@@ -1989,26 +1985,15 @@ static void ShowVirtualScrollingView(bool* p_open)
         return;
     }
 
-	if (!has_init_data)
-	{
-		for (size_t i = 0; i < dynamic_mem_size; ++i)
-			s_dynamic_mem_data[i] = rand() & 0xff;
-
-		has_init_data = true;
-	}
-
 	// Set up some constants for the drawing
-
-	uint64_t start_address = (uint64_t)(uintptr_t)s_dynamic_mem_data;
-	uint64_t end_address = start_address + 64 * 1024;
 
     const float font_size = ImGui::GetFontSize();
     const ImVec2 window_size = ImGui::GetWindowSize();
     // TODO: Proper
     const int drawable_chars = (int)(window_size.x / (font_size * 2.3f));
-    const int drawable_line_count = (int)((end_address - start_address) / drawable_chars);
+    const int drawable_line_count = (int)((800) / drawable_chars);
 
-    uint8_t* data = s_dynamic_mem_data;
+    uint32_t address = 0x20000;
 
 	//ImGui::BeginChild("child", window_size, false, 0);
 
@@ -2018,16 +2003,15 @@ static void ShowVirtualScrollingView(bool* p_open)
 	{
 		for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
 		{
-			// Get Hex and chars
-
-			ImGui::Text("%p: ", data);
+			ImGui::Text("0x08%x: ", address);
 			ImGui::SameLine(0, -1);
 
 			// Print hex values
 
 			for (int p = 0; p < drawable_chars; ++p)
 			{
-				ImGui::Text("%02x", data[p]);
+				uint32_t c = (address * (address + p)) & 0xff;
+				ImGui::Text("%02x", c);
 				ImGui::SameLine(0, -1);
 			}
 
@@ -2035,7 +2019,7 @@ static void ShowVirtualScrollingView(bool* p_open)
 
 			for (int p = 0; p < drawable_chars; ++p)
 			{
-				uint8_t c = data[p];
+				uint32_t c = (address * (address + p)) & 0xff;
 				uint8_t wc = 0;
 
 				if (c >= 32 && c < 128)
@@ -2049,7 +2033,7 @@ static void ShowVirtualScrollingView(bool* p_open)
 
 			ImGui::Text("\n");
 
-			data += drawable_chars;
+			address += drawable_chars;
 		}
 	}
 

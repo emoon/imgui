@@ -64,7 +64,7 @@ static void ShowExampleAppConstrainedResize(bool* p_open);
 static void ShowExampleAppFixedOverlay(bool* p_open);
 static void ShowExampleAppManipulatingWindowTitle(bool* p_open);
 static void ShowExampleAppCustomRendering(bool* p_open);
-static void ShowDynamicMemoryView(bool* p_open);
+static void ShowVirtualScrollingView(bool* p_open);
 static void ShowExampleAppMainMenuBar();
 static void ShowExampleMenuFile();
 
@@ -113,7 +113,7 @@ void ImGui::ShowTestWindow(bool* p_open)
     static bool show_app_manipulating_window_title = false;
     static bool show_app_custom_rendering = false;
     static bool show_app_style_editor = false;
-    static bool show_app_dynamic_memory_view = true;
+    static bool show_app_virtual_scrolling_view = true;
 
     static bool show_app_metrics = false;
     static bool show_app_about = false;
@@ -129,7 +129,7 @@ void ImGui::ShowTestWindow(bool* p_open)
     if (show_app_fixed_overlay) ShowExampleAppFixedOverlay(&show_app_fixed_overlay);
     if (show_app_manipulating_window_title) ShowExampleAppManipulatingWindowTitle(&show_app_manipulating_window_title);
     if (show_app_custom_rendering) ShowExampleAppCustomRendering(&show_app_custom_rendering);
-    if (show_app_dynamic_memory_view) ShowDynamicMemoryView(&show_app_dynamic_memory_view);
+    if (show_app_virtual_scrolling_view) ShowVirtualScrollingView(&show_app_virtual_scrolling_view);
 
     if (show_app_metrics) ImGui::ShowMetricsWindow(&show_app_metrics);
     if (show_app_style_editor) { ImGui::Begin("Style Editor", &show_app_style_editor); ImGui::ShowStyleEditor(); ImGui::End(); }
@@ -194,7 +194,7 @@ void ImGui::ShowTestWindow(bool* p_open)
             ImGui::MenuItem("Simple overlay", NULL, &show_app_fixed_overlay);
             ImGui::MenuItem("Manipulating window title", NULL, &show_app_manipulating_window_title);
             ImGui::MenuItem("Custom rendering", NULL, &show_app_custom_rendering);
-            ImGui::MenuItem("Dynamic Memory View", NULL, &show_app_dynamic_memory_view);
+            ImGui::MenuItem("Virtual Scrolling View", NULL, &show_app_virtual_scrolling_view);
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help"))
@@ -1981,9 +1981,9 @@ const size_t dynamic_mem_size = 1 * 1024 * 1024;
 static uint8_t s_dynamic_mem_data[dynamic_mem_size];
 static bool has_init_data = false;
 
-static void ShowDynamicMemoryView(bool* p_open)
+static void ShowVirtualScrollingView(bool* p_open)
 {
-    if (!ImGui::Begin("Example: Dynamic Memory", p_open, ImVec2(500, 500)))
+    if (!ImGui::Begin("Example: Virtual Scrolling", p_open, ImVec2(500, 500)))
     {
         ImGui::End();
         return;
@@ -2004,50 +2004,56 @@ static void ShowDynamicMemoryView(bool* p_open)
 
     const float font_size = ImGui::GetFontSize();
     const ImVec2 window_size = ImGui::GetWindowSize();
+    // TODO: Proper
     const int drawable_chars = (int)(window_size.x / (font_size * 2.3f));
     const int drawable_line_count = (int)((end_address - start_address) / drawable_chars);
 
     uint8_t* data = s_dynamic_mem_data;
 
-	ImGui::BeginChild("child", window_size, false, 0);
+	//ImGui::BeginChild("child", window_size, false, 0);
 
-    for (int i = 0; i < drawable_line_count; ++i)
+	ImGuiListClipper clipper(drawable_line_count);
+
+	while (clipper.Step())
 	{
-        // Get Hex and chars
+		for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+		{
+			// Get Hex and chars
 
-		ImGui::Text("%p: ", data);
-		ImGui::SameLine(0, -1);
-
-        // Print hex values
-
-        for (int p = 0; p < drawable_chars; ++p)
-        {
-			ImGui::Text("%02x", data[p]);
+			ImGui::Text("%p: ", data);
 			ImGui::SameLine(0, -1);
-        }
 
-        // print characters
+			// Print hex values
 
-        for (int p = 0; p < drawable_chars; ++p)
-        {
-            uint8_t c = data[p];
-            uint8_t wc = 0;
+			for (int p = 0; p < drawable_chars; ++p)
+			{
+				ImGui::Text("%02x", data[p]);
+				ImGui::SameLine(0, -1);
+			}
 
-            if (c >= 32 && c < 128)
-                wc = (char)c;
-            else
-                wc = '.';
+			// print characters
 
-			ImGui::Text("%c", wc);
-			ImGui::SameLine(0, 0);
-        }
+			for (int p = 0; p < drawable_chars; ++p)
+			{
+				uint8_t c = data[p];
+				uint8_t wc = 0;
 
-		ImGui::Text("\n");
+				if (c >= 32 && c < 128)
+					wc = (char)c;
+				else
+					wc = '.';
 
-        data += drawable_chars;
-    }
+				ImGui::Text("%c", wc);
+				ImGui::SameLine(0, 0);
+			}
 
-	ImGui::EndChild();
+			ImGui::Text("\n");
+
+			data += drawable_chars;
+		}
+	}
+
+	//ImGui::EndChild();
 
 	ImGui::End();
 }

@@ -1979,6 +1979,10 @@ static void ShowExampleAppCustomRendering(bool* p_open)
 
 static void ShowVirtualScrollingView(bool* p_open)
 {
+	const uint32_t start_address = 0x400000;
+	static uint32_t current_address = start_address;
+	static uint32_t end_address = start_address + 1024;
+
     if (!ImGui::Begin("Example: Virtual Scrolling", p_open, ImVec2(500, 500)))
     {
         ImGui::End();
@@ -1989,13 +1993,19 @@ static void ShowVirtualScrollingView(bool* p_open)
 
     const float font_size = ImGui::GetFontSize();
     const ImVec2 window_size = ImGui::GetWindowSize();
-    // TODO: Proper
-    const int drawable_chars = (int)(window_size.x / (font_size * 2.3f));
-    const int drawable_line_count = (int)((800) / drawable_chars);
+    // TODO: Proper calcutalition of chars per row
+    int drawable_chars = (int)(window_size.x / (font_size * 2.3f));
+    int drawable_line_count = (int)((end_address - start_address) / drawable_chars);
 
-    uint32_t address = 0x20000;
+    //printf("%d\n", drawable_line_count);
 
-	//ImGui::BeginChild("child", window_size, false, 0);
+    uint32_t address = current_address;
+    float scroll = ImGui::GetScrollY();
+
+	current_address = start_address + scroll * 2;
+	end_address = current_address + 1024;
+
+	printf("0x%x 0x%x (%d)\n", current_address, end_address, drawable_line_count);
 
 	ImGuiListClipper clipper(drawable_line_count);
 
@@ -2036,8 +2046,6 @@ static void ShowVirtualScrollingView(bool* p_open)
 			address += drawable_chars;
 		}
 	}
-
-	//ImGui::EndChild();
 
 	ImGui::End();
 }

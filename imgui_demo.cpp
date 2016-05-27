@@ -2003,7 +2003,7 @@ static void ShowVirtualScrollingView(bool* p_open)
 	{
 		for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
 		{
-			ImGui::Text("0x08%x: ", address);
+			ImGui::Text("0x%08x: ", address);
 			ImGui::SameLine(0, -1);
 
 			// Print hex values
